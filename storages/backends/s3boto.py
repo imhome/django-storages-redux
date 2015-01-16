@@ -10,6 +10,7 @@ from django.core.files.base import File
 from django.core.files.storage import Storage
 from django.core.exceptions import ImproperlyConfigured, SuspiciousOperation
 from django.utils.encoding import force_text, smart_str, filepath_to_uri, force_bytes
+from django.utils import timezone
 
 try:
     from boto import __version__ as boto_version
@@ -32,12 +33,26 @@ if boto_version_info[:2] < (2, 32):
 
 
 def parse_ts_extended(ts):
-    warnings.warn(
-        "parse_ts_extended has been deprecated and will be removed in version "
-        "1.3 because boto.utils.parse_ts has subsumed the old functionality.",
-        PendingDeprecationWarning
-    )
-    return parse_ts(ts)
+    RFC1123 = '%a, %d %b %Y %H:%M:%S %Z'
+
+    rv = None
+
+    try:
+        rv = parse_ts(ts)
+    except ValueError:
+        rv = datetime.datetime.strptime(ts, RFC1123)
+
+    #make the datetime object timezone aware
+    rv = rv.replace(tzinfo=timezone.utc)
+
+    #convert it to local time
+    rv = timezone.localtime(rv)
+
+    #remove the timezone awareness so collectstatic can compare
+    #it with another timeze unaware datetime object
+    rv = timezone.make_naive(rv, timezone.get_current_timezone())
+
+    return rv
 
 
 def safe_join(base, *paths):
@@ -477,7 +492,7 @@ class S3BotoStorage(Storage):
         if entry is None:
             entry = self.bucket.get_key(self._encode_name(name))
         # Parse the last_modified string to a local datetime object.
-        return parse_ts(entry.last_modified)
+        return parse_ts_extended(entry.last_modified)
 
     def url(self, name, headers=None, response_headers=None):
         # Preserve the trailing slash after normalizing the path.
