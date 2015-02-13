@@ -2,6 +2,10 @@ from setuptools import setup
 
 import storages
 
+def read(filename):
+    with open(filename) as f:
+        return f.read()
+
 setup(
     name='django-storages-redux',
     version=storages.__version__,
@@ -10,8 +14,8 @@ setup(
     author_email='josh.schneier@gmail.com',
     license='BSD',
     description='Support for many storages (S3, MogileFS, etc) in Django.',
-    long_description=open('README.rst').read() + '\n\n' + open('CHANGELOG.rst').read(),
-    url='https://github.com/jschneier/django-storages-redux',
+    long_description=read('README.rst') + '\n\n' + read('CHANGELOG.rst'),
+    url='https://github.com/jschneier/django-storages',
     classifiers=[
         'Framework :: Django',
         'Development Status :: 5 - Production/Stable',
