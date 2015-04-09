@@ -207,6 +207,7 @@ class S3BotoStorageFile(File):
                 self._multipart.cancel_upload()
         self.key.close()
 
+
 @deconstructible
 class S3BotoStorage(Storage):
     """
@@ -254,6 +255,8 @@ class S3BotoStorage(Storage):
     host = setting('AWS_S3_HOST', S3Connection.DefaultHost)
     use_ssl = setting('AWS_S3_USE_SSL', True)
     port = setting('AWS_S3_PORT', None)
+    proxy = setting('AWS_S3_PROXY_HOST', None)
+    proxy_port = setting('AWS_S3_PROXY_PORT', None)
 
     # The max amount of memory a returned file can take up before being
     # rolled over into a temporary file on disk. Default is 0: Do not roll over.
@@ -296,6 +299,8 @@ class S3BotoStorage(Storage):
                 calling_format=self.calling_format,
                 host=self.host,
                 port=self.port,
+                proxy=self.proxy,
+                proxy_port=self.proxy_port
             )
         return self._connection
 
@@ -316,7 +321,7 @@ class S3BotoStorage(Storage):
         """
         if self.preload_metadata and not self._entries:
             self._entries = dict((self._decode_name(entry.key), entry)
-                                for entry in self.bucket.list(prefix=self.location))
+                                 for entry in self.bucket.list(prefix=self.location))
         return self._entries
 
     def _get_access_keys(self):
@@ -339,8 +344,7 @@ class S3BotoStorage(Storage):
         Retrieves a bucket if it exists, otherwise creates it.
         """
         try:
-            return self.connection.get_bucket(name,
-                validate=self.auto_create_bucket)
+            return self.connection.get_bucket(name, validate=self.auto_create_bucket)
         except self.connection_response_error:
             if self.auto_create_bucket:
                 bucket = self.connection.create_bucket(name)
@@ -409,7 +413,7 @@ class S3BotoStorage(Storage):
         name = self._normalize_name(cleaned_name)
         headers = self.headers.copy()
         content_type = getattr(content, 'content_type',
-            mimetypes.guess_type(name)[0] or self.key_class.DefaultContentType)
+                               mimetypes.guess_type(name)[0] or self.key_class.DefaultContentType)
 
         # setting the content_type in the key object is not enough.
         headers.update({'Content-Type': content_type})
@@ -500,10 +504,10 @@ class S3BotoStorage(Storage):
             return "%s//%s/%s" % (self.url_protocol,
                                   self.custom_domain, filepath_to_uri(name))
         return self.connection.generate_url(self.querystring_expire,
-            method='GET', bucket=self.bucket.name, key=self._encode_name(name),
-            headers=headers,
-            query_auth=self.querystring_auth, force_http=not self.secure_urls,
-            response_headers=response_headers)
+                                            method='GET', bucket=self.bucket.name, key=self._encode_name(name),
+                                            headers=headers,
+                                            query_auth=self.querystring_auth, force_http=not self.secure_urls,
+                                            response_headers=response_headers)
 
     def get_available_name(self, name, max_length=None):
         """ Overwrite existing file with the same name. """
