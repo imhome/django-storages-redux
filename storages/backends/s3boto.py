@@ -30,6 +30,29 @@ if boto_version_info[:2] < (2, 32):
                                "higher.\nSee https://github.com/boto/boto")
 
 
+def parse_ts_extended(ts):
+    RFC1123 = '%a, %d %b %Y %H:%M:%S %Z'
+
+    rv = None
+
+    try:
+        rv = parse_ts(ts)
+    except ValueError:
+        rv = datetime.datetime.strptime(ts, RFC1123)
+
+    #make the datetime object timezone aware
+    rv = rv.replace(tzinfo=timezone.utc)
+
+    #convert it to local time
+    rv = timezone.localtime(rv)
+
+    #remove the timezone awareness so collectstatic can compare
+    #it with another timeze unaware datetime object
+    rv = timezone.make_naive(rv, timezone.get_current_timezone())
+
+    return rv
+
+
 def safe_join(base, *paths):
     """
     A version of django.utils._os.safe_join for S3 paths.
