@@ -10,6 +10,10 @@ django-storages
     :target: https://pypi.python.org/pypi/django-storages-redux
     :alt: PyPI Version
 
+Fork
+====
+Forked to fix issue where updated files were not uploaded to S3. Refer to commit `a76fa07
+<https://github.com/imhome/django-storages-redux/commit/a76fa07cdd9c72c0f2fc6447a134f0fa3d55d243>`_
 
 Installation
 ============
